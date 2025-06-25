@@ -1,0 +1,39 @@
+const puppeteer = require('puppeteer');
+
+(async () => {
+  const browser = await puppeteer.launch({ headless: false });
+  const page = await browser.newPage();
+
+  await page.goto('https://clipforge.ai'); // change this to your actual ClipForge AI URL
+
+  console.log("🧠 Waiting for manual login or load...");
+  await page.waitForTimeout(30000); // wait 30 seconds
+
+  // Type script text
+  await page.waitForSelector('textarea');
+  await page.type('textarea', 'Welcome to ClipForge AI!');
+
+  // Click "Generate" or "Create"
+  const buttons = await page.$$('button');
+  for (const btn of buttons) {
+    const label = await (await btn.getProperty('innerText')).jsonValue();
+    if (label.toLowerCase().includes('generate')) {
+      await btn.click();
+      break;
+    }
+  }
+
+  console.log("⏳ Waiting for video to render...");
+  await page.waitForTimeout(90000); // 1.5 minutes
+
+  // Try finding download link
+  const link = await page.$('a[href$=".mp4"]');
+  if (link) {
+    const url = await (await link.getProperty('href')).jsonValue();
+    console.log("✅ Download ready:", url);
+  } else {
+    console.log("⚠️ No download link found yet.");
+  }
+
+  // await browser.close();
+})();
